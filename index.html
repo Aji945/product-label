@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>搜尋系統</title>
+    <title>中文標搜尋系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -45,6 +45,32 @@
         
         <div class="flex-1">
             <div class="max-w-2xl mx-auto px-4">
+                <div id="instructions" class="mt-8 bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">操作說明</h2>
+                    <div class="space-y-2">
+                        <div class="flex items-start gap-2">
+                            <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center">1</span>
+                            <p class="text-gray-600">在輸入框輸入產品關鍵字</p>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center">2</span>
+                            <p class="text-gray-600">點選「搜尋」</p>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center">3</span>
+                            <p class="text-gray-600">查看商品圖片與對應名稱</p>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center">4</span>
+                            <p class="text-gray-600">點選「查看詳細內容」</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 pt-4 border-t">
+                        <p class="text-gray-700 font-medium">如需大宗訂購或任何需求：</p>
+                        <p class="mt-2 text-gray-600">請點擊右方 LINE 圖示或撥打電話進行聯繫</p>
+                    </div>
+                </div>
                 <div id="results" class="mt-8 space-y-4"></div>
             </div>
         </div>
@@ -71,6 +97,12 @@
             </button>
         </div>
     </div>
+
+    <footer class="w-full bg-gray-100 py-4 mt-8 border-t">
+        <div class="text-center text-gray-600 text-sm" id="copyright">
+            © 2024 隆順興公司版權所有 抄襲必究
+        </div>
+    </footer>
 
     <script>
         const API_KEY = 'AIzaSyCvZiOO5ax2WekV95A6C4--0YbDVZVBToQ';
@@ -140,6 +172,7 @@
             if (!query) return;
 
             suggestionsDiv.classList.add('hidden');
+            document.getElementById('instructions').style.display = 'none';
             resultsDiv.innerHTML = '<div class="text-center">搜尋中...</div>';
 
             try {
@@ -253,6 +286,7 @@
             document.getElementById('clearButton').classList.add('hidden');
             suggestionsDiv.classList.add('hidden');
             resultsDiv.innerHTML = '';
+            document.getElementById('instructions').style.display = 'block';
             searchInput.focus();
         }
 
@@ -313,6 +347,9 @@
             }
             return url;
         }
+
+        // 設置版權年份
+        document.getElementById('copyright').innerHTML = `© ${new Date().getFullYear()} 隆順興公司版權所有 抄襲必究`;
     </script>
 </body>
 </html> 
