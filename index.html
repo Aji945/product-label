@@ -164,11 +164,11 @@
                                 <div class="flex gap-4">
                                     ${row[5] ? `
                                         <div class="flex-shrink-0 w-32 h-32">
-                                            <img src="${row[5]}" 
+                                            <img src="${getGoogleDriveUrl(row[5])}" 
                                                  alt="${row[0]}" 
                                                  class="w-full h-full object-cover rounded cursor-pointer"
-                                                 onclick="openModal('${row[5]}')"
-                                                 onerror="this.src='placeholder.jpg'">
+                                                 onclick="openModal('${getGoogleDriveUrl(row[5])}')"
+                                                 onerror="this.onerror=null; this.src='https://via.placeholder.com/128?text=無圖片';">
                                         </div>
                                     ` : `
                                         <div class="flex-shrink-0 w-32 h-32 bg-gray-200 rounded flex items-center justify-center">
@@ -227,7 +227,20 @@
         function openModal(imgSrc) {
             const modal = document.getElementById('imageModal');
             const modalImg = document.getElementById('modalImage');
-            modalImg.src = imgSrc;
+            
+            // 先設置載入中的提示
+            modalImg.src = 'https://via.placeholder.com/400?text=載入中...';
+            
+            // 預載圖片
+            const img = new Image();
+            img.onload = function() {
+                modalImg.src = imgSrc;
+            };
+            img.onerror = function() {
+                modalImg.src = 'https://via.placeholder.com/400?text=圖片載入失敗';
+            };
+            img.src = imgSrc;
+            
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             
@@ -283,6 +296,29 @@
                 header.classList.remove('hidden');
             }
         });
+
+        function extractFileId(url) {
+            if (url && url.includes('drive.google.com')) {
+                let fileId;
+                if (url.includes('/open?id=')) {
+                    fileId = url.split('/open?id=')[1].split('&')[0];
+                } else if (url.includes('/file/d/')) {
+                    fileId = url.split('/file/d/')[1].split('/')[0];
+                } else if (url.includes('/folders/')) {
+                    fileId = url.split('/folders/')[1].split('?')[0];
+                }
+                return fileId;
+            }
+            return null;
+        }
+
+        function getGoogleDriveUrl(url) {
+            const fileId = extractFileId(url);
+            if (fileId) {
+                return `https://drive.google.com/file/d/${fileId}/view`;
+            }
+            return url;
+        }
     </script>
 </body>
 </html> 
