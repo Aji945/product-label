@@ -164,10 +164,10 @@
                                 <div class="flex gap-4">
                                     ${row[5] ? `
                                         <div class="flex-shrink-0 w-32 h-32">
-                                            <img src="${getGoogleDriveImageUrl(row[5])}" 
+                                            <img src="${getImageUrl(row[5])}" 
                                                  alt="${row[0]}" 
                                                  class="w-full h-full object-cover rounded cursor-pointer"
-                                                 onclick="openModal('${getGoogleDriveViewUrl(row[5])}')"
+                                                 onclick="openModal('${getDetailLink(row[5])}')"
                                                  onerror="this.onerror=null; this.src='https://via.placeholder.com/128?text=無圖片';">
                                         </div>
                                     ` : `
@@ -228,35 +228,18 @@
             const modal = document.getElementById('imageModal');
             const modalImg = document.getElementById('modalImage');
             
-            // 先設置載入中的提示
-            modalImg.src = 'https://via.placeholder.com/400?text=載入中...';
-            
-            // 預載圖片
-            const img = new Image();
-            img.onload = function() {
-                modalImg.src = imgSrc;
-            };
-            img.onerror = function() {
-                modalImg.src = 'https://via.placeholder.com/400?text=圖片載入失敗';
-            };
-            img.src = imgSrc;
+            // 使用 iframe 來顯示 Google Drive 預覽
+            modal.querySelector('.relative').innerHTML = `
+                <iframe src="${imgSrc}" 
+                        class="w-full h-[80vh] rounded"
+                        allow="autoplay"></iframe>
+                <button onclick="closeModal()" class="absolute top-4 right-4 text-white text-xl hover:text-gray-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
             
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            
-            // 點擊背景關閉
-            modal.onclick = function(e) {
-                if (e.target === modal) {
-                    closeModal();
-                }
-            };
-            
-            // ESC 鍵關閉
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    closeModal();
-                }
-            });
         }
 
         function closeModal() {
@@ -312,18 +295,21 @@
             return null;
         }
 
-        function getGoogleDriveImageUrl(url) {
-            const fileId = extractFileId(url);
+        function getImageUrl(url) {
+            if (!url) return null;
+            
+            let fileId = extractFileId(url);
             if (fileId) {
-                return `https://drive.google.com/uc?export=view&id=${fileId}`;
+                return `https://drive.google.com/thumbnail?id=${fileId}`;
             }
+            
             return url;
         }
 
-        function getGoogleDriveViewUrl(url) {
-            const fileId = extractFileId(url);
+        function getDetailLink(url) {
+            let fileId = extractFileId(url);
             if (fileId) {
-                return `https://drive.google.com/file/d/${fileId}/view`;
+                return `https://drive.google.com/file/d/${fileId}/preview`;
             }
             return url;
         }
