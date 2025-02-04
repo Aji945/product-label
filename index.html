@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>搜索系统</title>
+    <title>搜尋系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -12,14 +12,14 @@
     <div class="min-h-screen flex flex-col">
         <div class="w-full bg-gray-50 transition-all duration-300" id="searchContainer">
             <div class="max-w-2xl mx-auto px-4 py-4">
-                <h1 class="text-4xl font-bold text-center mb-8">搜索系统</h1>
+                <h1 class="text-4xl font-bold text-center mb-8">中文標搜尋系統</h1>
                 
                 <div class="relative">
                     <input
                         type="text"
                         id="searchInput"
                         class="w-full px-4 py-2 rounded-full border focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="輸入關鍵詞搜索..."
+                        placeholder="輸入關鍵詞搜尋..."
                     >
                     
                     <button 
@@ -34,7 +34,7 @@
                         onclick="handleSearch()"
                         class="absolute right-3 top-1/2 -translate-y-1/2 px-4 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600"
                     >
-                        搜索
+                        搜尋
                     </button>
 
                     <div id="suggestions" class="absolute w-full mt-1 bg-white rounded-lg shadow-lg border hidden">
@@ -140,7 +140,7 @@
             if (!query) return;
 
             suggestionsDiv.classList.add('hidden');
-            resultsDiv.innerHTML = '<div class="text-center">搜索中...</div>';
+            resultsDiv.innerHTML = '<div class="text-center">搜尋中...</div>';
 
             try {
                 const response = await fetch(
@@ -210,8 +210,8 @@
                     resultsDiv.innerHTML = '<div class="text-center">未找到相關結果</div>';
                 }
             } catch (error) {
-                console.error('搜索失败:', error);
-                resultsDiv.innerHTML = '<div class="text-center text-red-500">搜索失败，请稍后重试</div>';
+                console.error('搜尋失敗:', error);
+                resultsDiv.innerHTML = '<div class="text-center text-red-500">搜尋失敗，請稍後重試</div>';
             }
         }
 
