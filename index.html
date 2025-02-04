@@ -164,10 +164,10 @@
                                 <div class="flex gap-4">
                                     ${row[5] ? `
                                         <div class="flex-shrink-0 w-32 h-32">
-                                            <img src="${getGoogleDriveUrl(row[5])}" 
+                                            <img src="${getGoogleDriveImageUrl(row[5])}" 
                                                  alt="${row[0]}" 
                                                  class="w-full h-full object-cover rounded cursor-pointer"
-                                                 onclick="openModal('${getGoogleDriveUrl(row[5])}')"
+                                                 onclick="openModal('${getGoogleDriveViewUrl(row[5])}')"
                                                  onerror="this.onerror=null; this.src='https://via.placeholder.com/128?text=無圖片';">
                                         </div>
                                     ` : `
@@ -312,7 +312,15 @@
             return null;
         }
 
-        function getGoogleDriveUrl(url) {
+        function getGoogleDriveImageUrl(url) {
+            const fileId = extractFileId(url);
+            if (fileId) {
+                return `https://drive.google.com/uc?export=view&id=${fileId}`;
+            }
+            return url;
+        }
+
+        function getGoogleDriveViewUrl(url) {
             const fileId = extractFileId(url);
             if (fileId) {
                 return `https://drive.google.com/file/d/${fileId}/view`;
