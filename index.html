@@ -2,8 +2,8 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中文標搜尋系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>商品資訊搜尋系統 - 隆順興</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://apis.google.com/js/api.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -12,7 +12,7 @@
     <div class="min-h-screen flex flex-col">
         <div class="w-full bg-gray-50 transition-all duration-300" id="searchContainer">
             <div class="max-w-2xl mx-auto px-4 py-4">
-                <h1 class="text-4xl font-bold text-center mb-8">中文標搜尋系統</h1>
+                <h1 class="text-4xl font-bold text-center mb-8">商品資訊搜尋系統</h1>
                 
                 <div class="relative">
                     <input
@@ -67,7 +67,7 @@
                     </div>
                     
                     <div class="mt-6 pt-4 border-t">
-                        <p class="text-gray-700 font-medium">如需大宗訂購或任何需求：</p>
+                        <p class="text-gray-700 font-medium">如需大宗訂購或任何問題：</p>
                         <p class="mt-2 text-gray-600">請點擊右方 LINE 圖示或撥打電話進行聯繫</p>
                     </div>
                 </div>
@@ -76,7 +76,7 @@
         </div>
     </div>
 
-    <div class="fixed bottom-6 right-6 flex flex-col gap-4">
+    <div class="fixed bottom-6 right-6 flex flex-col gap-4 mb-safe">
         <a href="https://line.me/ti/p/95aeasIFGP" 
            target="_blank"
            class="w-12 h-12 bg-[#00B900] rounded-full flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity">
@@ -99,10 +99,32 @@
     </div>
 
     <footer class="w-full bg-gray-100 py-4 mt-8 border-t">
-        <div class="text-center text-gray-600 text-sm" id="copyright">
-            © 2024 隆順興公司版權所有 抄襲必究
+        <div class="max-w-2xl mx-auto px-4">
+            <div class="text-center space-y-2">
+                <div class="text-gray-600 text-sm" id="copyright">
+                    © 2024 隆順興有限公司版權所有 抄襲必究
+                </div>
+                <a href="https://maps.google.com/?q=427台中市潭子區潭興路二段86號" 
+                   target="_blank"
+                   class="text-gray-600 hover:text-blue-600 text-sm inline-flex items-center justify-center gap-1">
+                    <i class="fas fa-map-marker-alt"></i>
+                    427台中市潭子區潭興路二段86號
+                </a>
+            </div>
         </div>
     </footer>
+
+    <style>
+        @supports(padding: max(0px)) {
+            .mb-safe {
+                margin-bottom: max(1.5rem, env(safe-area-inset-bottom));
+            }
+        }
+        
+        body {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    </style>
 
     <script>
         const API_KEY = 'AIzaSyCvZiOO5ax2WekV95A6C4--0YbDVZVBToQ';
@@ -350,6 +372,32 @@
 
         // 設置版權年份
         document.getElementById('copyright').innerHTML = `© ${new Date().getFullYear()} 隆順興公司版權所有 抄襲必究`;
+
+        // 在 script 標籤內添加事件監聽
+        document.addEventListener('click', function(event) {
+            // 檢查點擊是否在搜尋框或建議選單內
+            const isClickInside = searchInput.contains(event.target) || 
+                                 suggestionsDiv.contains(event.target);
+            
+            // 如果點擊在外部，且建議選單是顯示狀態，則隱藏它
+            if (!isClickInside && !suggestionsDiv.classList.contains('hidden')) {
+                suggestionsDiv.classList.add('hidden');
+            }
+        });
+
+        // 修改 searchInput 的點擊事件，防止事件傳播
+        searchInput.addEventListener('click', function(event) {
+            event.stopPropagation();
+            // 如果輸入框有值且長度大於1，顯示建議
+            if (this.value.trim().length >= 2) {
+                fetchSuggestions();
+            }
+        });
+
+        // 修改建議選單的點擊事件，防止事件傳播
+        suggestionsDiv.addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
     </script>
 </body>
 </html> 
