@@ -186,6 +186,7 @@
         function handleSuggestionClick(value) {
             searchInput.value = value;
             suggestionsDiv.classList.add('hidden');
+            document.getElementById('clearButton').classList.remove('hidden');
             handleSearch();
         }
 
@@ -195,6 +196,7 @@
 
             suggestionsDiv.classList.add('hidden');
             document.getElementById('instructions').style.display = 'none';
+            document.getElementById('clearButton').classList.remove('hidden');
             resultsDiv.innerHTML = '<div class="text-center">搜尋中...</div>';
 
             try {
