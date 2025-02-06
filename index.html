@@ -72,7 +72,7 @@
                     </div>
                 </div>
 
-                <div class="mt-4 bg-white p-6 rounded-lg shadow-md">
+                <div id="invoiceSection" class="mt-4 bg-white p-6 rounded-lg shadow-md">
                     <div class="flex items-center gap-4">
                         <div class="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <i class="fas fa-receipt text-blue-600 text-2xl"></i>
@@ -223,6 +223,7 @@
 
             suggestionsDiv.classList.add('hidden');
             document.getElementById('instructions').style.display = 'none';
+            document.getElementById('invoiceSection').style.display = 'none';
             document.getElementById('clearButton').classList.remove('hidden');
             resultsDiv.innerHTML = '<div class="text-center">搜尋中...</div>';
 
@@ -247,57 +248,63 @@
                 if (results.length > 0) {
                     resultsDiv.innerHTML = `
                         <p class="text-sm text-gray-600 mb-4">找到 ${results.length} 個結果</p>
-                        ${results.map((row, index) => `
-                            <div class="bg-white p-4 rounded-lg shadow hover:shadow-md">
-                                <h2 class="text-xl font-semibold text-blue-600 mb-3">${row[0] || ''}</h2>
-                                
-                                <div class="flex gap-4">
-                                    ${row[5] ? `
-                                        <div class="flex-shrink-0 w-32 h-32">
-                                            <img src="${getImageUrl(row[5])}" 
-                                                 alt="${row[0]}" 
-                                                 class="w-full h-full object-cover rounded cursor-pointer"
-                                                 onclick="openModal('${getDetailLink(row[5])}')"
-                                                 onerror="this.onerror=null; this.src='https://via.placeholder.com/128?text=無圖片';">
-                                        </div>
-                                    ` : `
-                                        <div class="flex-shrink-0 w-32 h-32 bg-gray-200 rounded flex items-center justify-center">
-                                            <span class="text-gray-400">無圖片</span>
-                                        </div>
-                                    `}
+                        <div class="space-y-4">
+                            ${results.map((row, index) => `
+                                <div class="bg-white p-4 rounded-lg shadow hover:shadow-md">
+                                    <h2 class="text-xl font-semibold text-blue-600 mb-3">${row[0] || ''}</h2>
                                     
-                                    <div class="flex-grow grid grid-cols-1 gap-1.5">
-                                        ${row.slice(1, 5).map((value, i) => value ? `
-                                            <div class="flex items-center text-sm">
-                                                <span class="inline-block w-20 flex-shrink-0 text-gray-500">${headers[i + 1]}</span>
-                                                <span class="text-gray-900">${value}</span>
+                                    <div class="flex gap-4">
+                                        ${row[5] ? `
+                                            <div class="flex-shrink-0 w-32 h-32">
+                                                <img src="${getImageUrl(row[5])}" 
+                                                     alt="${row[0]}" 
+                                                     class="w-full h-full object-cover rounded cursor-pointer"
+                                                     onclick="openModal('${getDetailLink(row[5])}')"
+                                                     onerror="this.onerror=null; this.src='https://via.placeholder.com/128?text=無圖片';">
                                             </div>
-                                        ` : '').join('')}
+                                        ` : `
+                                            <div class="flex-shrink-0 w-32 h-32 bg-gray-200 rounded flex items-center justify-center">
+                                                <span class="text-gray-400">無圖片</span>
+                                            </div>
+                                        `}
+                                        
+                                        <div class="flex-grow grid grid-cols-1 gap-1.5">
+                                            ${row.slice(1, 5).map((value, i) => value ? `
+                                                <div class="flex items-center text-sm">
+                                                    <span class="inline-block w-20 flex-shrink-0 text-gray-500">${headers[i + 1]}</span>
+                                                    <span class="text-gray-900">${value}</span>
+                                                </div>
+                                            ` : '').join('')}
+                                        </div>
+                                    </div>
+
+                                    <button 
+                                        onclick="toggleDetails(${index})"
+                                        class="mt-4 w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                    >
+                                        查看詳細資訊
+                                    </button>
+
+                                    <div id="details-${index}" class="hidden mt-4">
+                                        <div class="grid grid-cols-1 gap-4">
+                                            ${headers.slice(6).map((header, i) => row[i + 6] ? `
+                                                <div class="bg-gray-50 p-3 rounded">
+                                                    <h3 class="font-semibold text-gray-700">${header}</h3>
+                                                    <p class="text-gray-600 whitespace-pre-line mt-1">${row[i + 6]}</p>
+                                                </div>
+                                            ` : '').join('')}
+                                        </div>
                                     </div>
                                 </div>
-
-                                <button 
-                                    onclick="toggleDetails(${index})"
-                                    class="mt-4 w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                                >
-                                    查看詳細資訊
-                                </button>
-
-                                <div id="details-${index}" class="hidden mt-4">
-                                    <div class="grid grid-cols-1 gap-4">
-                                        ${headers.slice(6).map((header, i) => row[i + 6] ? `
-                                            <div class="bg-gray-50 p-3 rounded">
-                                                <h3 class="font-semibold text-gray-700">${header}</h3>
-                                                <p class="text-gray-600 whitespace-pre-line mt-1">${row[i + 6]}</p>
-                                            </div>
-                                        ` : '').join('')}
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
+                            `).join('')}
+                        </div>
+                        ${getInvoiceSection()}
                     `;
                 } else {
-                    resultsDiv.innerHTML = '<div class="text-center">未找到相關結果</div>';
+                    resultsDiv.innerHTML = `
+                        <div class="text-center mb-8">未找到相關結果</div>
+                        ${getInvoiceSection()}
+                    `;
                 }
             } catch (error) {
                 console.error('搜尋失敗:', error);
@@ -344,6 +351,7 @@
             suggestionsDiv.classList.add('hidden');
             resultsDiv.innerHTML = '';
             document.getElementById('instructions').style.display = 'block';
+            document.getElementById('invoiceSection').style.display = 'block';
             searchInput.focus();
         }
 
@@ -391,48 +399,4 @@
             
             let fileId = extractFileId(url);
             if (fileId) {
-                return `https://drive.google.com/thumbnail?id=${fileId}`;
-            }
-            
-            return url;
-        }
-
-        function getDetailLink(url) {
-            let fileId = extractFileId(url);
-            if (fileId) {
-                return `https://drive.google.com/file/d/${fileId}/preview`;
-            }
-            return url;
-        }
-
-        // 設置版權年份
-        document.getElementById('copyright').innerHTML = `© ${new Date().getFullYear()} 隆順興公司版權所有 抄襲必究`;
-
-        // 在 script 標籤內添加事件監聽
-        document.addEventListener('click', function(event) {
-            // 檢查點擊是否在搜尋框或建議選單內
-            const isClickInside = searchInput.contains(event.target) || 
-                                 suggestionsDiv.contains(event.target);
-            
-            // 如果點擊在外部，且建議選單是顯示狀態，則隱藏它
-            if (!isClickInside && !suggestionsDiv.classList.contains('hidden')) {
-                suggestionsDiv.classList.add('hidden');
-            }
-        });
-
-        // 修改 searchInput 的點擊事件，防止事件傳播
-        searchInput.addEventListener('click', function(event) {
-            event.stopPropagation();
-            // 如果輸入框有值且長度大於1，顯示建議
-            if (this.value.trim().length >= 2) {
-                fetchSuggestions();
-            }
-        });
-
-        // 修改建議選單的點擊事件，防止事件傳播
-        suggestionsDiv.addEventListener('click', function(event) {
-            event.stopPropagation();
-        });
-    </script>
-</body>
-</html> 
+                return `https://drive.google.com/thumbnail?id=${fileId}`
