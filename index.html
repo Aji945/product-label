@@ -165,15 +165,21 @@
 
                 if (suggestions.length > 0) {
                     suggestionsDiv.innerHTML = suggestions
-                        .map(row => `
-                            <div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" 
-                                 onclick="handleSuggestionClick('${row[0]}')">
-                                <div class="font-medium">${row[0]}</div>
-                                <div class="text-sm text-gray-500">
-                                    ${row.slice(1, 5).filter(Boolean).join(' • ')}
+                        .map(row => {
+                            // 找出匹配的欄位內容
+                            const matchedValue = row.slice(0, 5).find(cell => 
+                                cell?.toLowerCase().includes(query.toLowerCase())
+                            ) || '';
+                            return `
+                                <div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" 
+                                     onclick="selectSuggestion('${matchedValue.replace(/'/g, "\\'")}', true)">
+                                    <div class="font-medium">${row[0]}</div>
+                                    <div class="text-sm text-gray-500">
+                                        ${row.slice(1, 5).filter(Boolean).join(' • ')}
+                                    </div>
                                 </div>
-                            </div>
-                        `).join('');
+                            `;
+                        }).join('');
                     suggestionsDiv.classList.remove('hidden');
                 } else {
                     suggestionsDiv.classList.add('hidden');
@@ -183,14 +189,14 @@
             }
         }
 
-        function handleSuggestionClick(value) {
+        function selectSuggestion(value, searchFields) {
             searchInput.value = value;
             suggestionsDiv.classList.add('hidden');
             document.getElementById('clearButton').classList.remove('hidden');
-            handleSearch();
+            handleSearch(searchFields);
         }
 
-        async function handleSearch() {
+        async function handleSearch(searchAllFields = false) {
             const query = searchInput.value.trim();
             if (!query) return;
 
@@ -207,8 +213,14 @@
                 const [headers, ...rows] = data.values || [];
 
                 const results = rows.filter(row => {
-                    const searchableFields = row.slice(0, 5).join(' ').toLowerCase();
-                    return searchableFields.includes(query.toLowerCase());
+                    if (searchAllFields) {
+                        // 搜尋所有欄位 (A-E)
+                        const searchableFields = row.slice(0, 5).join(' ').toLowerCase();
+                        return searchableFields.includes(query.toLowerCase());
+                    } else {
+                        // 只搜尋主欄位 (A欄)
+                        return row[0].toLowerCase().includes(query.toLowerCase());
+                    }
                 });
 
                 if (results.length > 0) {
