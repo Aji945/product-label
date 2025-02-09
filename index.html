@@ -300,6 +300,11 @@
                         </div>
                         ${getInvoiceSection()}
                     `;
+                    // 添加滾動邏輯
+                    window.scrollTo({
+                        top: resultsDiv.offsetTop - 100,
+                        behavior: 'smooth'
+                    });
                 } else {
                     resultsDiv.innerHTML = `
                         <div class="text-center mb-8">未找到相關結果</div>
