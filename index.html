@@ -5,380 +5,935 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="robots" content="noindex, nofollow">
     <title>商品資訊搜尋系統 - 隆順興</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://apis.google.com/js/api.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-</head>
-<body class="bg-gray-50">
-    <div class="min-h-screen flex flex-col">
-        <div class="w-full bg-gray-50 transition-all duration-300" id="searchContainer">
-            <div class="max-w-2xl mx-auto px-4 py-4">
-                <h1 class="text-4xl font-bold text-center mb-8">商品資訊搜尋系統</h1>
-                
-                <div class="relative">
-                    <input
-                        type="text"
-                        id="searchInput"
-                        class="w-full px-4 py-2 rounded-full border focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="輸入關鍵詞搜尋..."
-                    >
-                    
-                    <button 
-                        id="clearButton"
-                        onclick="clearSearch()"
-                        class="absolute right-20 top-1/2 -translate-y-1/2 px-2 text-gray-400 hover:text-gray-600 hidden"
-                    >
-                        <i class="fas fa-times"></i>
-                    </button>
-                    
-                    <button 
-                        onclick="handleSearch(true)"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 px-4 py-1 bg-blue-500 text-white rounded-full hover:bg-blue-600"
-                    >
-                        搜尋
-                    </button>
+    <style>
+        :root {
+            --bg: #EDF0EE;
+            --paper: #FFFFFF;
+            --ink: #1C1F1D;
+            --muted: #5B635E;
+            --line: #C9CFCB;
+            --accent: #0E5E5A;
+            --accent-soft: #D8ECEA;
+            --line-green: #00B900;
+        }
 
-                    <div id="suggestions" class="absolute w-full mt-1 bg-white rounded-lg shadow-lg border hidden">
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body { margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--ink);
+            font-family: 'Noto Sans TC', system-ui, sans-serif;
+            font-weight: 400;
+            font-size: 15px;
+            line-height: 1.7;
+            padding-bottom: env(safe-area-inset-bottom);
+            -webkit-text-size-adjust: 100%;
+            overflow-x: hidden;
+        }
+
+        a { color: inherit; }
+
+        :focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .wrap {
+            width: 100%;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        .wrap-wide {
+            width: 100%;
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        .site-title {
+            margin: 0;
+            padding: 32px 0 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        /* 搜尋列 */
+        .search-bar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: var(--bg);
+            padding: 10px 0;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .search-bar.is-stuck {
+            box-shadow: 0 1px 0 var(--line);
+        }
+
+        .search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-field {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+        }
+
+        #searchInput {
+            width: 100%;
+            height: 48px;
+            padding: 0 44px 0 16px;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            background: var(--paper);
+            color: var(--ink);
+            font: inherit;
+            font-size: 16px;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-soft);
+        }
+
+        #clearButton {
+            position: absolute;
+            right: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        #clearButton:hover { color: var(--ink); }
+
+        .search-btn {
+            flex-shrink: 0;
+            height: 48px;
+            padding: 0 20px;
+            border: 0;
+            border-radius: 4px;
+            background: var(--accent);
+            color: #fff;
+            font: inherit;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .search-btn:hover { background: #0B4D4A; }
+
+        .hidden { display: none !important; }
+
+        /* 下拉建議 */
+        #suggestions {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 4px);
+            margin: 0;
+            padding: 4px 0;
+            list-style: none;
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            box-shadow: 0 8px 24px rgba(28, 31, 29, 0.12);
+            z-index: 30;
+            overflow: hidden;
+        }
+
+        .sug-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 56px;
+            padding: 0 12px;
+            cursor: pointer;
+        }
+
+        .sug-item:hover { background: var(--bg); }
+
+        .sug-item.is-active {
+            background: var(--accent-soft);
+            box-shadow: inset 3px 0 0 var(--accent);
+        }
+
+        .sug-thumb {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 2px;
+            background: #E1E5E2;
+            object-fit: cover;
+            display: block;
+        }
+
+        .sug-name {
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        mark {
+            background: var(--accent-soft);
+            color: var(--ink);
+            text-decoration: underline;
+            text-decoration-color: var(--accent);
+            text-decoration-thickness: 2px;
+            text-underline-offset: 3px;
+        }
+
+        .sug-item.is-active mark { background: transparent; }
+
+        /* 說明與發票 */
+        .info {
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--paper);
+            border-radius: 4px;
+        }
+
+        .info h2 {
+            margin: 0 0 10px;
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .steps {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            counter-reset: step;
+            display: grid;
+            gap: 6px;
+        }
+
+        .steps li {
+            counter-increment: step;
+            display: flex;
+            gap: 10px;
+            align-items: baseline;
+        }
+
+        .steps li::before {
+            content: counter(step);
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            border: 1px solid var(--ink);
+            border-radius: 50%;
+            font-size: 13px;
+            font-weight: 500;
+            line-height: 20px;
+            text-align: center;
+        }
+
+        .contact {
+            margin: 14px 0 0;
+            padding-top: 12px;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+        }
+
+        .invoice p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .invoice-link {
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 48px;
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            color: var(--accent);
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .invoice-link:hover { background: var(--accent-soft); }
+
+        /* 結果 */
+        #results { margin-top: 20px; }
+
+        .status {
+            padding: 32px 0;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .status.error { color: #A3271F; }
+
+        .result-count {
+            margin: 0 0 12px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .product {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .product-img {
+            width: 100%;
+            max-width: 240px;
+            aspect-ratio: 1 / 1;
+            flex-shrink: 0;
+            padding: 0;
+            border: 0;
+            border-radius: 4px;
+            background: #E1E5E2;
+            overflow: hidden;
+            cursor: zoom-in;
+            display: block;
+        }
+
+        .product-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .product-img.is-empty { cursor: default; }
+
+        .label {
+            width: 100%;
+            min-width: 0;
+            background: var(--paper);
+            border: 2px solid var(--ink);
+            border-radius: 4px;
+        }
+
+        .label-title {
+            margin: 0;
+            padding: 12px 14px;
+            border-bottom: 2px solid var(--ink);
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+
+        .label-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .label-table th,
+        .label-table td {
+            padding: 8px 12px;
+            vertical-align: top;
+            text-align: left;
+            border-top: 1px solid var(--line);
+        }
+
+        .label-table tr:first-child th,
+        .label-table tr:first-child td { border-top: 0; }
+
+        .label-table th {
+            width: 5.5em;
+            box-sizing: content-box;
+            border-right: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .label-table td {
+            font-size: 15px;
+            line-height: 1.7;
+            white-space: pre-line;
+            word-break: break-word;
+        }
+
+        .platforms {
+            border-top: 2px solid var(--ink);
+        }
+
+        .platforms summary {
+            padding: 10px 14px;
+            min-height: 44px;
+            cursor: pointer;
+            font-weight: 500;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .platforms summary::-webkit-details-marker { display: none; }
+
+        .platforms summary::after {
+            content: '';
+            flex-shrink: 0;
+            width: 8px;
+            height: 8px;
+            margin-right: 4px;
+            border-right: 2px solid var(--muted);
+            border-bottom: 2px solid var(--muted);
+            transform: translateY(-2px) rotate(45deg);
+            transition: transform 0.2s ease;
+        }
+
+        .platforms[open] summary::after { transform: translateY(2px) rotate(-135deg); }
+
+        .platforms .label-table { border-top: 1px solid var(--line); }
+
+        @media (min-width: 768px) {
+            .site-title { font-size: 28px; padding-top: 48px; }
+
+            .product {
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 24px;
+            }
+
+            .product-img {
+                width: 200px;
+                max-width: 200px;
+            }
+
+            .label-title { font-size: 22px; }
+        }
+
+        /* 浮動鈕 */
+        .float-actions {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 40;
+        }
+
+        @supports (padding: max(0px)) {
+            .float-actions { bottom: max(20px, env(safe-area-inset-bottom)); }
+        }
+
+        .float-actions a {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(28, 31, 29, 0.2);
+        }
+
+        .float-line { background: var(--line-green); font-size: 26px; }
+        .float-phone { background: var(--accent); font-size: 20px; }
+
+        /* 放大視窗 */
+        #imageModal {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        #imageModal.hidden { display: none !important; }
+
+        .modal-box {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .modal-box iframe {
+            width: 100%;
+            height: 80vh;
+            border: 0;
+            border-radius: 4px;
+            background: #000;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 44px;
+            height: 44px;
+            border: 0;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        footer {
+            margin-top: 32px;
+            padding: 16px 0 88px;
+            border-top: 1px solid var(--line);
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .main { flex: 1; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                transition: none !important;
+                animation: none !important;
+                scroll-behavior: auto !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <header class="wrap">
+            <h1 class="site-title">商品資訊搜尋系統</h1>
+        </header>
+
+        <div class="search-bar" id="searchContainer">
+            <div class="wrap">
+                <div class="search-box">
+                    <div class="search-field">
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="輸入關鍵詞搜尋..."
+                            autocomplete="off"
+                            role="combobox"
+                            aria-autocomplete="list"
+                            aria-expanded="false"
+                            aria-controls="suggestions"
+                            aria-label="搜尋商品"
+                        >
+                        <button id="clearButton" type="button" class="hidden" aria-label="清除">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <ul id="suggestions" class="hidden" role="listbox"></ul>
                     </div>
+                    <button type="button" id="searchButton" class="search-btn">搜尋</button>
                 </div>
             </div>
         </div>
-        
-        <div class="flex-1">
-            <div class="max-w-2xl mx-auto px-4">
-                <div id="instructions" class="mt-8 bg-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">操作說明</h2>
-                    <div class="space-y-2">
-                        <div class="flex items-start gap-2">
-                            <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center">1</span>
-                            <p class="text-gray-600">在輸入框輸入產品關鍵字</p>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center">2</span>
-                            <p class="text-gray-600">點選「搜尋」</p>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center">3</span>
-                            <p class="text-gray-600">查看商品圖片與對應名稱</p>
-                        </div>
-                        <div class="flex items-start gap-2">
-                            <span class="flex-shrink-0 w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center">4</span>
-                            <p class="text-gray-600">點選「查看詳細內容」</p>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-6 pt-4 border-t">
-                        <p class="text-gray-700 font-medium">如需大宗訂購或任何問題：</p>
-                        <p class="mt-2 text-gray-600">請點擊右方 LINE 圖示或撥打電話進行聯繫</p>
-                    </div>
-                </div>
 
-                <div id="invoiceSection" class="mt-4 bg-white p-6 rounded-lg shadow-md">
-                    <div class="flex items-center gap-4">
-                        <div class="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-receipt text-blue-600 text-2xl"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-xl font-semibold text-gray-800">蝦皮電子發票專區</h2>
-                            <p class="text-gray-600 mt-1">請「完成訂單」後點擊下方連結</p>
-                            <p class="text-gray-600 mt-1">可進行 統編/歸戶/載具/捐贈/查詢</p>
-                        </div>
-                    </div>
-                    
-                    <a href="https://i.ajinerp.com/" 
-                       target="_blank"
-                       class="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-2 hover:from-blue-600 hover:to-blue-700 transition-all">
+        <main class="main">
+            <div class="wrap">
+                <section id="instructions" class="info">
+                    <h2>操作說明</h2>
+                    <ol class="steps">
+                        <li>輸入產品關鍵字，從清單點選商品或按「搜尋」</li>
+                        <li>查看商品圖片與中文標示</li>
+                    </ol>
+                    <p class="contact">大宗訂購或任何問題，請點右下 LINE 或撥打電話聯繫</p>
+                </section>
+
+                <section id="invoiceSection" class="info invoice">
+                    <h2>蝦皮電子發票專區</h2>
+                    <p>請「完成訂單」後點擊下方連結</p>
+                    <p>可進行 統編/歸戶/載具/捐贈/查詢</p>
+                    <a href="https://i.ajinerp.com/" target="_blank" rel="noopener" class="invoice-link">
                         <i class="fas fa-external-link-alt"></i>
                         <span>前往開立電子發票</span>
                     </a>
-                </div>
-
-                <div id="results" class="mt-8 space-y-4"></div>
+                </section>
             </div>
-        </div>
-    </div>
 
-    <div class="fixed bottom-6 right-6 flex flex-col gap-4 mb-safe">
-        <a href="https://line.me/ti/p/95aeasIFGP" 
-           target="_blank"
-           class="w-12 h-12 bg-[#00B900] rounded-full flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity">
-            <i class="fab fa-line text-white text-2xl"></i>
-        </a>
-        
-        <a href="tel:+886908851249"
-           class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity">
-            <i class="fas fa-phone text-white text-xl"></i>
-        </a>
-    </div>
-
-    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50">
-        <div class="relative max-w-4xl max-h-[90vh] mx-4">
-            <img id="modalImage" src="" alt="" class="max-w-full max-h-[90vh] object-contain">
-            <button onclick="closeModal()" class="absolute top-4 right-4 text-white text-xl hover:text-gray-300">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    </div>
-
-    <footer class="w-full bg-gray-100 py-4 mt-8 border-t">
-        <div class="max-w-2xl mx-auto px-4">
-            <div class="text-center space-y-2">
-                <div class="text-gray-600 text-sm" id="copyright">
-                    © 2024 隆順興有限公司版權所有 抄襲必究
-                </div>
-
+            <div class="wrap-wide">
+                <div id="results"></div>
             </div>
-        </div>
-    </footer>
+        </main>
 
-    <style>
-        @supports(padding: max(0px)) {
-            .mb-safe {
-                margin-bottom: max(1.5rem, env(safe-area-inset-bottom));
-            }
-        }
-        
-        body {
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-    </style>
+        <footer>
+            <div class="wrap" id="copyright">© 2024 隆順興有限公司版權所有 抄襲必究</div>
+        </footer>
+    </div>
+
+    <div class="float-actions">
+        <a href="https://line.me/ti/p/95aeasIFGP" target="_blank" rel="noopener" class="float-line" aria-label="LINE">
+            <i class="fab fa-line"></i>
+        </a>
+        <a href="tel:+886908851249" class="float-phone" aria-label="電話">
+            <i class="fas fa-phone"></i>
+        </a>
+    </div>
+
+    <div id="imageModal" class="hidden">
+        <div class="modal-box"></div>
+    </div>
 
     <script>
         const API_KEY = 'AIzaSyCvZiOO5ax2WekV95A6C4--0YbDVZVBToQ';
         const SHEET_ID = '15pOyPD6HYcjsfoqkKcuyQeXPMjE3pE9gTTGgIt6MbuA';
-        
+
         const searchInput = document.getElementById('searchInput');
         const suggestionsDiv = document.getElementById('suggestions');
         const resultsDiv = document.getElementById('results');
+        const clearButton = document.getElementById('clearButton');
+        const imageModal = document.getElementById('imageModal');
 
+        const PLATFORM_COLS = [1, 2, 3, 4];
+        const DETAIL_COLS = [6, 7, 8, 9, 10, 11, 12];
+        const MAX_SUGGESTIONS = 6;
+
+        let suggestionRows = [];
+        let activeIndex = -1;
         let timeoutId;
-        searchInput.addEventListener('input', () => {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(fetchSuggestions, 300);
-        });
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function highlight(text, query) {
+            const source = String(text ?? '');
+            const q = query.toLowerCase();
+            const lower = source.toLowerCase();
+            if (!q) return escapeHtml(source);
+            let out = '';
+            let pos = 0;
+            let idx = lower.indexOf(q, pos);
+            while (idx !== -1) {
+                out += escapeHtml(source.slice(pos, idx));
+                out += '<mark>' + escapeHtml(source.slice(idx, idx + q.length)) + '</mark>';
+                pos = idx + q.length;
+                idx = lower.indexOf(q, pos);
+            }
+            return out + escapeHtml(source.slice(pos));
+        }
+
+        function matchesAE(row, query) {
+            const q = query.toLowerCase();
+            return row.slice(0, 5).some(cell => cell?.toLowerCase().includes(q));
+        }
+
+        async function fetchRows() {
+            const response = await fetch(
+                `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/A:M?key=${API_KEY}`
+            );
+            const data = await response.json();
+            const [headers = [], ...rows] = data.values || [];
+            return { headers, rows };
+        }
+
+        // ---------- 下拉建議 ----------
+
+        function hideSuggestions() {
+            suggestionsDiv.classList.add('hidden');
+            searchInput.setAttribute('aria-expanded', 'false');
+            searchInput.removeAttribute('aria-activedescendant');
+            activeIndex = -1;
+        }
+
+        function setActive(index) {
+            const items = suggestionsDiv.querySelectorAll('.sug-item');
+            if (!items.length) return;
+            activeIndex = (index + items.length) % items.length;
+            items.forEach((item, i) => {
+                const on = i === activeIndex;
+                item.classList.toggle('is-active', on);
+                item.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            searchInput.setAttribute('aria-activedescendant', items[activeIndex].id);
+        }
 
         async function fetchSuggestions() {
             const query = searchInput.value.trim();
             if (query.length < 2) {
-                suggestionsDiv.classList.add('hidden');
+                hideSuggestions();
                 return;
             }
 
             try {
-                const response = await fetch(
-                    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/A:E?key=${API_KEY}`
-                );
-                const data = await response.json();
-                const rows = data.values || [];
+                const { rows } = await fetchRows();
+                if (searchInput.value.trim() !== query) return;
 
-                const suggestions = rows
-                    .filter(row => {
-                        // 檢查A-E欄位是否包含搜尋關鍵字
-                        return row.slice(0, 5).some(cell => 
-                            cell?.toLowerCase().includes(query.toLowerCase())
-                        );
-                    })
-                    .slice(0, 5);
+                suggestionRows = rows
+                    .filter(row => row[0] && matchesAE(row, query))
+                    .slice(0, MAX_SUGGESTIONS);
 
-                if (suggestions.length > 0) {
-                    suggestionsDiv.innerHTML = suggestions
-                        .map(row => {
-                            // 找出匹配的欄位內容
-                            const matchedValue = row.slice(0, 5).find(cell => 
-                                cell?.toLowerCase().includes(query.toLowerCase())
-                            ) || '';
-                            return `
-                                <div class="px-4 py-2 hover:bg-gray-100 cursor-pointer" 
-                                     onclick="selectSuggestion('${matchedValue.replace(/'/g, "\\'")}', true)">
-                                    <div class="font-medium">${row[0]}</div>
-                                    <div class="text-sm text-gray-500">
-                                        ${row.slice(1, 5).filter(Boolean).join(' • ')}
-                                    </div>
-                                </div>
-                            `;
-                        }).join('');
-                    suggestionsDiv.classList.remove('hidden');
-                } else {
-                    suggestionsDiv.classList.add('hidden');
+                if (!suggestionRows.length) {
+                    hideSuggestions();
+                    return;
                 }
+
+                suggestionsDiv.innerHTML = suggestionRows.map((row, i) => {
+                    const thumb = row[5]
+                        ? `<img class="sug-thumb" src="${escapeHtml(getImageUrl(row[5]))}" alt="" loading="lazy" onerror="this.removeAttribute('src')">`
+                        : '<span class="sug-thumb"></span>';
+                    return `
+                        <li class="sug-item" id="sug-${i}" role="option" aria-selected="false" data-index="${i}">
+                            ${thumb}
+                            <span class="sug-name">${highlight(row[0], query)}</span>
+                        </li>
+                    `;
+                }).join('');
+
+                activeIndex = -1;
+                suggestionsDiv.classList.remove('hidden');
+                searchInput.setAttribute('aria-expanded', 'true');
             } catch (error) {
                 console.error('獲取建議失敗:', error);
             }
         }
 
-        function selectSuggestion(value, searchFields) {
-            searchInput.value = value;
-            suggestionsDiv.classList.add('hidden');
-            document.getElementById('clearButton').classList.remove('hidden');
-            handleSearch(searchFields);
+        function selectSuggestion(index) {
+            const row = suggestionRows[index];
+            if (!row) return;
+            searchInput.value = row[0];
+            hideSuggestions();
+            updateClearButton();
+            handleSearch(row[0]);
         }
 
-        async function handleSearch(searchAllFields = false) {
+        suggestionsDiv.addEventListener('mousedown', event => event.preventDefault());
+
+        suggestionsDiv.addEventListener('click', event => {
+            event.stopPropagation();
+            const item = event.target.closest('.sug-item');
+            if (item) selectSuggestion(Number(item.dataset.index));
+        });
+
+        suggestionsDiv.addEventListener('mousemove', event => {
+            const item = event.target.closest('.sug-item');
+            if (item && Number(item.dataset.index) !== activeIndex) {
+                setActive(Number(item.dataset.index));
+            }
+        });
+
+        // ---------- 搜尋結果 ----------
+
+        function renderProduct(row, headers) {
+            const name = row[0] || '';
+            const image = row[5]
+                ? `<button type="button" class="product-img" data-preview="${escapeHtml(getDetailLink(row[5]))}" aria-label="放大圖片">
+                       <img src="${escapeHtml(getImageUrl(row[5]))}" alt="${escapeHtml(name)}" onerror="this.remove()">
+                   </button>`
+                : '<div class="product-img is-empty" aria-hidden="true"></div>';
+
+            const detailRows = DETAIL_COLS
+                .filter(i => row[i] && String(row[i]).trim())
+                .map(i => `
+                    <tr>
+                        <th scope="row">${escapeHtml(headers[i] || '')}</th>
+                        <td>${escapeHtml(String(row[i]).trim())}</td>
+                    </tr>
+                `).join('');
+
+            const platformRows = PLATFORM_COLS
+                .filter(i => row[i] && String(row[i]).trim())
+                .map(i => `
+                    <tr>
+                        <th scope="row">${escapeHtml(headers[i] || '')}</th>
+                        <td>${escapeHtml(String(row[i]).trim())}</td>
+                    </tr>
+                `).join('');
+
+            return `
+                <article class="product">
+                    ${image}
+                    <div class="label">
+                        <h2 class="label-title">${escapeHtml(name)}</h2>
+                        ${detailRows ? `<table class="label-table"><tbody>${detailRows}</tbody></table>` : ''}
+                        ${platformRows ? `
+                            <details class="platforms">
+                                <summary>各平台商品名稱</summary>
+                                <table class="label-table"><tbody>${platformRows}</tbody></table>
+                            </details>
+                        ` : ''}
+                    </div>
+                </article>
+            `;
+        }
+
+        async function handleSearch(exactName) {
             const query = searchInput.value.trim();
             if (!query) return;
 
-            suggestionsDiv.classList.add('hidden');
+            hideSuggestions();
             document.getElementById('instructions').style.display = 'none';
             document.getElementById('invoiceSection').style.display = 'none';
-            document.getElementById('clearButton').classList.remove('hidden');
-            resultsDiv.innerHTML = '<div class="text-center">搜尋中...</div>';
+            updateClearButton();
+            resultsDiv.innerHTML = '<div class="status">搜尋中...</div>';
 
             try {
-                const response = await fetch(
-                    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/A:M?key=${API_KEY}`
-                );
-                const data = await response.json();
-                const [headers, ...rows] = data.values || [];
+                const { headers, rows } = await fetchRows();
 
-                const results = rows.filter(row => {
-                    if (searchAllFields) {
-                        // 搜尋所有欄位 (A-E)
-                        const searchableFields = row.slice(0, 5).join(' ').toLowerCase();
-                        return searchableFields.includes(query.toLowerCase());
-                    } else {
-                        // 只搜尋主欄位 (A欄)
-                        return row[0].toLowerCase().includes(query.toLowerCase());
-                    }
-                });
+                const results = typeof exactName === 'string'
+                    ? rows.filter(row => row[0] === exactName)
+                    : rows.filter(row => matchesAE(row, query));
 
                 if (results.length > 0) {
                     resultsDiv.innerHTML = `
-                        <p class="text-sm text-gray-600 mb-4">找到 ${results.length} 個結果</p>
-                        <div class="space-y-4">
-                            ${results.map((row, index) => `
-                                <div class="bg-white p-4 rounded-lg shadow hover:shadow-md">
-                                    <h2 class="text-xl font-semibold text-blue-600 mb-3">${row[0] || ''}</h2>
-                                    
-                                    <div class="flex gap-4">
-                                        ${row[5] ? `
-                                            <div class="flex-shrink-0 w-32 h-32">
-                                                <img src="${getImageUrl(row[5])}" 
-                                                     alt="${row[0]}" 
-                                                     class="w-full h-full object-cover rounded cursor-pointer"
-                                                     onclick="openModal('${getDetailLink(row[5])}')"
-                                                     onerror="this.onerror=null; this.src='https://via.placeholder.com/128?text=無圖片';">
-                                            </div>
-                                        ` : `
-                                            <div class="flex-shrink-0 w-32 h-32 bg-gray-200 rounded flex items-center justify-center">
-                                                <span class="text-gray-400">無圖片</span>
-                                            </div>
-                                        `}
-                                        
-                                        <div class="flex-grow grid grid-cols-1 gap-1.5">
-                                            ${row.slice(1, 5).map((value, i) => value ? `
-                                                <div class="flex items-center text-sm">
-                                                    <span class="inline-block w-20 flex-shrink-0 text-gray-500">${headers[i + 1]}</span>
-                                                    <span class="text-gray-900">${value}</span>
-                                                </div>
-                                            ` : '').join('')}
-                                        </div>
-                                    </div>
-
-                                    <button 
-                                        onclick="toggleDetails(${index})"
-                                        class="mt-4 w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                                    >
-                                        查看詳細資訊
-                                    </button>
-
-                                    <div id="details-${index}" class="hidden mt-4">
-                                        <div class="grid grid-cols-1 gap-4">
-                                            ${headers.slice(6).map((header, i) => row[i + 6] ? `
-                                                <div class="bg-gray-50 p-3 rounded">
-                                                    <h3 class="font-semibold text-gray-700">${header}</h3>
-                                                    <p class="text-gray-600 whitespace-pre-line mt-1">${row[i + 6]}</p>
-                                                </div>
-                                            ` : '').join('')}
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
+                        ${results.length > 1 ? `<p class="result-count">找到 ${results.length} 個結果</p>` : ''}
+                        ${results.map(row => renderProduct(row, headers)).join('')}
                         ${getInvoiceSection()}
                     `;
-                    // 添加滾動邏輯
+                    const top = document.getElementById('searchContainer').offsetHeight;
                     window.scrollTo({
-                        top: resultsDiv.offsetTop - 100,
-                        behavior: 'smooth'
+                        top: Math.max(0, resultsDiv.getBoundingClientRect().top + window.scrollY - top - 12),
+                        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
                     });
                 } else {
                     resultsDiv.innerHTML = `
-                        <div class="text-center mb-8">未找到相關結果</div>
+                        <div class="status">未找到相關結果</div>
                         ${getInvoiceSection()}
                     `;
                 }
             } catch (error) {
                 console.error('搜尋失敗:', error);
-                resultsDiv.innerHTML = '<div class="text-center text-red-500">搜尋失敗，請稍後重試</div>';
+                resultsDiv.innerHTML = '<div class="status error">搜尋失敗，請稍後重試</div>';
             }
         }
 
-        function toggleDetails(index) {
-            const detailsDiv = document.getElementById(`details-${index}`);
-            const isHidden = detailsDiv.classList.contains('hidden');
-            detailsDiv.classList.toggle('hidden');
-            
-            const button = detailsDiv.previousElementSibling;
-            button.textContent = isHidden ? '收起詳細資訊' : '查看詳細資訊';
-        }
+        // ---------- 放大圖片 ----------
 
-        function openModal(imgSrc) {
-            const modal = document.getElementById('imageModal');
-            const modalImg = document.getElementById('modalImage');
-            
-            // 使用 iframe 來顯示 Google Drive 預覽
-            modal.querySelector('.relative').innerHTML = `
-                <iframe src="${imgSrc}" 
-                        class="w-full h-[80vh] rounded"
-                        allow="autoplay"></iframe>
-                <button onclick="closeModal()" class="absolute top-4 right-4 text-white text-xl hover:text-gray-300">
-                    <i class="fas fa-times"></i>
-                </button>
+        function openModal(src) {
+            imageModal.querySelector('.modal-box').innerHTML = `
+                <iframe src="${escapeHtml(src)}" allow="autoplay" title="商品圖片"></iframe>
+                <button type="button" class="modal-close" aria-label="關閉"><i class="fas fa-times"></i></button>
             `;
-            
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            imageModal.classList.remove('hidden');
+            imageModal.querySelector('.modal-close').focus();
         }
 
         function closeModal() {
-            const modal = document.getElementById('imageModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            imageModal.classList.add('hidden');
+            imageModal.querySelector('.modal-box').innerHTML = '';
+        }
+
+        resultsDiv.addEventListener('click', event => {
+            const btn = event.target.closest('.product-img[data-preview]');
+            if (btn) openModal(btn.dataset.preview);
+        });
+
+        imageModal.addEventListener('click', event => {
+            if (event.target === imageModal || event.target.closest('.modal-close')) closeModal();
+        });
+
+        // ---------- 輸入與清除 ----------
+
+        function updateClearButton() {
+            clearButton.classList.toggle('hidden', !searchInput.value);
         }
 
         function clearSearch() {
             searchInput.value = '';
-            document.getElementById('clearButton').classList.add('hidden');
-            suggestionsDiv.classList.add('hidden');
+            updateClearButton();
+            hideSuggestions();
             resultsDiv.innerHTML = '';
-            document.getElementById('instructions').style.display = 'block';
-            document.getElementById('invoiceSection').style.display = 'block';
+            document.getElementById('instructions').style.display = '';
+            document.getElementById('invoiceSection').style.display = '';
             searchInput.focus();
         }
 
-        // 監聽輸入框變化，顯示/隱藏清除按鈕
+        clearButton.addEventListener('click', clearSearch);
+        document.getElementById('searchButton').addEventListener('click', () => handleSearch());
+
         searchInput.addEventListener('input', () => {
-            const clearButton = document.getElementById('clearButton');
-            if (searchInput.value) {
-                clearButton.classList.remove('hidden');
-            } else {
-                clearButton.classList.add('hidden');
+            updateClearButton();
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(fetchSuggestions, 300);
+        });
+
+        searchInput.addEventListener('click', function (event) {
+            event.stopPropagation();
+            if (this.value.trim().length >= 2 && suggestionsDiv.classList.contains('hidden')) {
+                fetchSuggestions();
             }
         });
 
-        // 監聽滾動事件，固定搜尋框
-        window.addEventListener('scroll', () => {
-            const searchContainer = document.getElementById('searchContainer');
-            const header = document.querySelector('h1');
-            
-            if (window.scrollY > 100) {
-                searchContainer.classList.add('fixed', 'top-0', 'left-0', 'right-0', 'shadow-md', 'z-10');
-                header.classList.add('hidden');
-            } else {
-                searchContainer.classList.remove('fixed', 'top-0', 'left-0', 'right-0', 'shadow-md', 'z-10');
-                header.classList.remove('hidden');
+        searchInput.addEventListener('keydown', function (event) {
+            const open = !suggestionsDiv.classList.contains('hidden');
+            if (event.key === 'ArrowDown' && open) {
+                event.preventDefault();
+                setActive(activeIndex + 1);
+            } else if (event.key === 'ArrowUp' && open) {
+                event.preventDefault();
+                setActive(activeIndex - 1);
+            } else if (event.key === 'Escape') {
+                if (open) {
+                    event.preventDefault();
+                    hideSuggestions();
+                }
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                if (event.isComposing) return;
+                clearTimeout(timeoutId);
+                if (open && activeIndex >= 0) {
+                    selectSuggestion(activeIndex);
+                } else if (this.value.trim()) {
+                    handleSearch();
+                }
             }
         });
+
+        document.addEventListener('click', event => {
+            if (!searchInput.contains(event.target) && !suggestionsDiv.contains(event.target)) {
+                hideSuggestions();
+            }
+        });
+
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && !imageModal.classList.contains('hidden')) closeModal();
+        });
+
+        // 捲動後搜尋列固定在頂端
+        const searchContainer = document.getElementById('searchContainer');
+        window.addEventListener('scroll', () => {
+            searchContainer.classList.toggle('is-stuck', window.scrollY > 100);
+        }, { passive: true });
+
+        // ---------- 圖片網址 ----------
 
         function extractFileId(url) {
             if (url && url.includes('drive.google.com')) {
@@ -397,91 +952,36 @@
 
         function getImageUrl(url) {
             if (!url) return null;
-            
-            let fileId = extractFileId(url);
+            const fileId = extractFileId(url);
             if (fileId) {
                 return `https://drive.google.com/thumbnail?id=${fileId}`;
             }
-            
             return url;
         }
 
         function getDetailLink(url) {
-            let fileId = extractFileId(url);
+            const fileId = extractFileId(url);
             if (fileId) {
                 return `https://drive.google.com/file/d/${fileId}/preview`;
             }
             return url;
         }
 
-        // 設置版權年份
-        document.getElementById('copyright').innerHTML = `© ${new Date().getFullYear()} 隆順興有限公司版權所有 抄襲必究`;
+        document.getElementById('copyright').textContent = `© ${new Date().getFullYear()} 隆順興有限公司版權所有 抄襲必究`;
 
-        // 點擊空白處隱藏建議選單
-        document.addEventListener('click', function(event) {
-            const isClickInside = searchInput.contains(event.target) || 
-                                 suggestionsDiv.contains(event.target);
-            
-            if (!isClickInside && !suggestionsDiv.classList.contains('hidden')) {
-                suggestionsDiv.classList.add('hidden');
-            }
-        });
-
-        // 搜尋框點擊事件
-        searchInput.addEventListener('click', function(event) {
-            event.stopPropagation();
-            if (this.value.trim().length >= 2) {
-                fetchSuggestions();
-            }
-        });
-
-        // 建議選單點擊事件
-        suggestionsDiv.addEventListener('click', function(event) {
-            event.stopPropagation();
-        });
-
-        // 電子發票區塊函數
         function getInvoiceSection() {
             return `
-                <div class="mt-4 bg-white p-6 rounded-lg shadow-md">
-                    <div class="flex items-center gap-4">
-                        <div class="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <i class="fas fa-receipt text-blue-600 text-2xl"></i>
-                        </div>
-                        <div>
-                            <h2 class="text-xl font-semibold text-gray-800">蝦皮電子發票專區</h2>
-                            <p class="text-gray-600 mt-1">請「完成訂單」後點擊下方連結</p>
-                            <p class="text-gray-600 mt-1">可進行 統編/歸戶/載具/捐贈/查詢</p>
-                        </div>
-                    </div>
-                    
-                    <a href="https://i.ajinerp.com/" 
-                       target="_blank"
-                       class="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-2 hover:from-blue-600 hover:to-blue-700 transition-all">
+                <section class="info invoice">
+                    <h2>蝦皮電子發票專區</h2>
+                    <p>請「完成訂單」後點擊下方連結</p>
+                    <p>可進行 統編/歸戶/載具/捐贈/查詢</p>
+                    <a href="https://i.ajinerp.com/" target="_blank" rel="noopener" class="invoice-link">
                         <i class="fas fa-external-link-alt"></i>
                         <span>前往開立電子發票</span>
                     </a>
-                </div>
+                </section>
             `;
         }
-
-        // 在 script 標籤內添加 Enter 鍵監聽
-        searchInput.addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                event.preventDefault(); // 防止表單提交
-                if (this.value.trim()) {
-                    // 如果建議選單有選中項目，使用該項目搜尋
-                    const activeSuggestion = suggestionsDiv.querySelector('.hover\\:bg-gray-100:hover');
-                    if (!suggestionsDiv.classList.contains('hidden') && activeSuggestion) {
-                        const value = activeSuggestion.querySelector('.font-medium').textContent;
-                        selectSuggestion(value, true);
-                    } else {
-                        // 否則直接搜尋輸入的關鍵字
-                        handleSearch(true);
-                    }
-                }
-            }
-        });
     </script>
 </body>
 </html>
