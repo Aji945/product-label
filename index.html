@@ -184,6 +184,14 @@
 
         .sug-item:hover { background: var(--bg); }
 
+        .sug-loading {
+            padding: 0 12px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            color: var(--muted);
+        }
+
         .sug-item.is-active {
             background: var(--accent-soft);
             box-shadow: inset 3px 0 0 var(--accent);
@@ -469,30 +477,45 @@
         .float-line { background: var(--line-green); font-size: 26px; }
         .float-phone { background: var(--accent); font-size: 20px; }
 
+        .float-text { display: none; }
+
         @media (max-width: 767.98px) {
+            /* 手機：底部固定一條聯絡列 */
             .float-actions {
-                right: 12px;
-                bottom: 16px;
-                gap: 10px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                flex-direction: row;
+                gap: 0;
+                padding-bottom: env(safe-area-inset-bottom);
+                background: var(--paper);
+                box-shadow: 0 -1px 0 var(--line);
             }
 
             @supports (padding: max(0px)) {
-                .float-actions { bottom: max(16px, env(safe-area-inset-bottom)); }
+                .float-actions { bottom: 0; }
             }
 
             .float-actions a {
-                width: 44px;
-                height: 44px;
+                flex: 1;
+                width: auto;
+                height: 52px;
+                border-radius: 0;
+                gap: 8px;
+                box-shadow: none;
+                font-size: 15px;
+                font-weight: 500;
             }
 
-            .float-line { font-size: 24px; }
-            .float-phone { font-size: 18px; }
+            .float-actions a i { font-size: 20px; }
 
-            /* 結果區右側與底部讓出浮動鈕的位置 */
-            #results {
-                padding-right: 48px;
-                padding-bottom: 120px;
+            .float-text { display: inline; }
+
+            body {
+                padding-bottom: calc(52px + env(safe-area-inset-bottom));
             }
+
+            body footer { padding-bottom: 16px; }
         }
 
         /* 放大視窗 */
@@ -622,10 +645,10 @@
 
     <div class="float-actions">
         <a href="https://line.me/ti/p/95aeasIFGP" target="_blank" rel="noopener" class="float-line" aria-label="LINE">
-            <i class="fab fa-line"></i>
+            <i class="fab fa-line" aria-hidden="true"></i><span class="float-text">LINE</span>
         </a>
-        <a href="tel:+886908851249" class="float-phone" aria-label="電話">
-            <i class="fas fa-phone"></i>
+        <a href="tel:+886908851249" class="float-phone" aria-label="撥打電話">
+            <i class="fas fa-phone" aria-hidden="true"></i><span class="float-text">撥打電話</span>
         </a>
     </div>
 
@@ -682,14 +705,38 @@
             return row.slice(0, 5).some(cell => cell?.toLowerCase().includes(q));
         }
 
-        async function fetchRows() {
-            const response = await fetch(
+        // 總表快取：開頁預抓一次，5 分鐘內共用
+        const CACHE_TTL = 5 * 60 * 1000;
+        let rowsCache = null;
+
+        function fetchRows() {
+            if (rowsCache && Date.now() - rowsCache.time < CACHE_TTL) {
+                return rowsCache.promise;
+            }
+            const entry = { time: Date.now(), ready: false, promise: null };
+            entry.promise = fetch(
                 `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/A:M?key=${API_KEY}`
-            );
-            const data = await response.json();
-            const [headers = [], ...rows] = data.values || [];
-            return { headers, rows };
+            )
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.values) throw new Error(data.error?.message || '讀取總表失敗');
+                    const [headers = [], ...rows] = data.values;
+                    entry.ready = true;
+                    return { headers, rows };
+                })
+                .catch(error => {
+                    if (rowsCache === entry) rowsCache = null;
+                    throw error;
+                });
+            rowsCache = entry;
+            return entry.promise;
         }
+
+        function rowsReady() {
+            return !!(rowsCache && rowsCache.ready && Date.now() - rowsCache.time < CACHE_TTL);
+        }
+
+        fetchRows().catch(error => console.error('預先讀取總表失敗:', error));
 
         // ---------- 下拉建議 ----------
 
@@ -720,6 +767,11 @@
             }
 
             try {
+                if (!rowsReady()) {
+                    suggestionsDiv.innerHTML = '<li class="sug-loading">載入中</li>';
+                    suggestionsDiv.classList.remove('hidden');
+                    searchInput.setAttribute('aria-expanded', 'true');
+                }
                 const { rows } = await fetchRows();
                 if (searchInput.value.trim() !== query) return;
 
@@ -734,7 +786,7 @@
 
                 suggestionsDiv.innerHTML = suggestionRows.map((row, i) => {
                     const thumb = row[5]
-                        ? `<img class="sug-thumb" src="${escapeHtml(getImageUrl(row[5]))}" alt="" loading="lazy" onerror="this.removeAttribute('src')">`
+                        ? `<img class="sug-thumb" src="${escapeHtml(getImageUrl(row[5], 'w96'))}" alt="" loading="lazy" onerror="this.removeAttribute('src')">`
                         : '<span class="sug-thumb"></span>';
                     return `
                         <li class="sug-item" id="sug-${i}" role="option" aria-selected="false" data-index="${i}">
@@ -782,7 +834,7 @@
             const name = row[0] || '';
             const image = row[5]
                 ? `<button type="button" class="product-img" data-preview="${escapeHtml(getDetailLink(row[5]))}" aria-label="放大圖片">
-                       <img src="${escapeHtml(getImageUrl(row[5]))}" alt="${escapeHtml(name)}" onerror="this.remove()">
+                       <img src="${escapeHtml(getImageUrl(row[5], 'w480'))}" alt="${escapeHtml(name)}" onerror="this.remove()">
                    </button>`
                 : '<div class="product-img is-empty" aria-hidden="true"></div>';
 
@@ -908,7 +960,7 @@
         searchInput.addEventListener('input', () => {
             updateClearButton();
             clearTimeout(timeoutId);
-            timeoutId = setTimeout(fetchSuggestions, 300);
+            timeoutId = setTimeout(fetchSuggestions, 120);
         });
 
         searchInput.addEventListener('click', function (event) {
@@ -976,11 +1028,11 @@
             return null;
         }
 
-        function getImageUrl(url) {
+        function getImageUrl(url, size) {
             if (!url) return null;
             const fileId = extractFileId(url);
             if (fileId) {
-                return `https://drive.google.com/thumbnail?id=${fileId}`;
+                return `https://drive.google.com/thumbnail?id=${fileId}` + (size ? `&sz=${size}` : '');
             }
             return url;
         }
