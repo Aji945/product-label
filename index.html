@@ -469,6 +469,32 @@
         .float-line { background: var(--line-green); font-size: 26px; }
         .float-phone { background: var(--accent); font-size: 20px; }
 
+        @media (max-width: 767.98px) {
+            .float-actions {
+                right: 12px;
+                bottom: 16px;
+                gap: 10px;
+            }
+
+            @supports (padding: max(0px)) {
+                .float-actions { bottom: max(16px, env(safe-area-inset-bottom)); }
+            }
+
+            .float-actions a {
+                width: 44px;
+                height: 44px;
+            }
+
+            .float-line { font-size: 24px; }
+            .float-phone { font-size: 18px; }
+
+            /* 結果區右側與底部讓出浮動鈕的位置 */
+            #results {
+                padding-right: 48px;
+                padding-bottom: 120px;
+            }
+        }
+
         /* 放大視窗 */
         #imageModal {
             position: fixed;
