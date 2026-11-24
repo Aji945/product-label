@@ -692,7 +692,7 @@
         const clearButton = document.getElementById('clearButton');
         const imageModal = document.getElementById('imageModal');
 
-        const PLATFORM_COLS = [1, 2, 3, 4];
+        const PLATFORM_COLS = [1, 2, 13, 3, 4];
         const DETAIL_COLS = [6, 7, 8, 9, 10, 11, 12];
         const MAX_SUGGESTIONS = 6;
 
@@ -728,7 +728,7 @@
 
         function matchesAE(row, query) {
             const q = query.toLowerCase();
-            return row.slice(0, 5).some(cell => cell?.toLowerCase().includes(q));
+            return [...row.slice(0, 5), row[13]].some(cell => cell?.toLowerCase().includes(q));
         }
 
         // 總表快取：開頁預抓一次，5 分鐘內共用
@@ -741,7 +741,7 @@
             }
             const entry = { time: Date.now(), ready: false, promise: null };
             entry.promise = fetch(
-                `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/A:M?key=${API_KEY}`
+                `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/A:N?key=${API_KEY}`
             )
                 .then(response => response.json())
                 .then(data => {
